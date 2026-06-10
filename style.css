@@ -1,0 +1,1082 @@
+/* ==========================================================================
+       VARIÁVEIS CSS GLOBAIS
+       Centraliza cores e tamanhos; mudar aqui reflete em todo o app (DRY)
+       ========================================================================== */
+    :root {
+      --laranja:     #F97316; /* cor primária laranja – sucos/lanches         */
+      --laranja-esc: #EA6800; /* laranja mais escuro para hover/active        */
+      --verde:       #3A7D2C; /* verde escuro – cor principal da marca        */
+      --verde-claro: #5AA832; /* verde médio para destaques                  */
+      --verde-bg:    #E8F5E2; /* verde bem claro para fundos de categoria     */
+      --vermelho:    #EF4444; /* cor de alerta / cancelamento                 */
+      --azul:        #3B82F6; /* cor informativa / status "em preparo"        */
+      --fundo:       #F7F9F5; /* fundo branco-esverdeado suave               */
+      --superficie:  #FFFFFF; /* cartões e painéis internos brancos           */
+      --borda:       #D8E8D0; /* separadores sutis verdes claros              */
+      --texto:       #1A2E14; /* texto principal verde escuro                 */
+      --texto-2:     #6B8C61; /* texto secundário / labels verde médio        */
+      --raio:        14px;    /* border-radius padrão dos componentes         */
+      --raio-sm:     8px;     /* border-radius menor para botões internos     */
+      --sombra:      0 4px 24px rgba(58,125,44,0.12); /* sombra suave verde  */
+    }
+
+    /* ==========================================================================
+       RESET E BASE
+       Remove margens/paddings padrão do navegador e define comportamento base
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box; /* padding e border não somam ao tamanho definido */
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;           /* ocupa toda a altura da tela                  */
+      font-family: 'DM Sans', sans-serif; /* fonte base do corpo               */
+      background: var(--fundo);
+      color: var(--texto);
+      overflow-x: hidden;     /* impede rolagem horizontal indesejada          */
+      -webkit-tap-highlight-color: transparent; /* remove destaque azul no toque mobile */
+    }
+
+    /* Scrollbar personalizada para parecer parte do design */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--fundo); }
+    ::-webkit-scrollbar-thumb { background: var(--borda); border-radius: 4px; }
+
+    /* ==========================================================================
+       TELA DE CARREGAMENTO INICIAL
+       Exibida enquanto o Firebase verifica o estado de autenticação (RF1)
+       ========================================================================== */
+    #tela-loading {
+      position: fixed;        /* cobre toda a tela independente do scroll      */
+      inset: 0;               /* atalho para top/right/bottom/left = 0         */
+      background: var(--fundo);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;           /* fica acima de tudo                            */
+      gap: 16px;
+    }
+
+    /* Logo animado na tela de loading */
+    .logo-loading {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--laranja);
+      letter-spacing: -1px;
+    }
+
+    /* Spinner (círculo girando) de carregamento */
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--borda);         /* círculo base cinza    */
+      border-top-color: var(--laranja);        /* arco laranja que gira */
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;   /* animação contínua     */
+    }
+
+    /* Keyframe: rotação 360° */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Texto de loading */
+    .loading-text {
+      color: var(--texto-2);
+      font-size: 0.8rem;
+    }
+
+    /* Tela de login como container flexível */
+    .tela-login-container {
+      display: none;          /* oculta por padrão */
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--fundo);
+      background-image: radial-gradient(circle, #c8e6b8 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Box de demonstração de login */
+    .login-demo-box {
+      margin-top: 20px;
+      padding: 12px;
+      background: var(--fundo);
+      border-radius: var(--raio-sm);
+      font-size: 0.78rem;
+      color: var(--texto-2);
+    }
+
+    .login-demo-title {
+      color: var(--texto);
+    }
+
+    /* Container principal da app */
+    .app-container {
+      display: none;          /* oculta; JS exibe após autenticação */
+      flex-direction: column;
+      height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ==========================================================================
+       TELA DE LOGIN (RF8, RF13, RNF13, RNF14)
+       Exibida quando o usuário não está autenticado
+       ========================================================================== */
+    #tela-login {
+      display: none;          /* oculta por padrão; JS exibe quando necessário */
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--fundo);
+      /* Padrão de bolinhas decorativo no fundo */
+      background-image: radial-gradient(circle, #c8e6b8 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Cartão central do login */
+    .card-login {
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio);
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: var(--sombra);
+      animation: subir 0.5s ease; /* entra deslizando de baixo para cima */
+    }
+
+    @keyframes subir {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cabeçalho do card de login com logo + subtítulo */
+    .login-header { text-align: center; margin-bottom: 32px; }
+
+    .login-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: var(--laranja);
+      line-height: 1;
+    }
+
+    .login-sub {
+      font-size: 0.8rem;
+      color: var(--texto-2);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Abas de seleção de perfil: GERENTE / ATENDENTE (RF8, RNF14) */
+    .tabs-perfil {
+      display: flex;
+      background: var(--fundo);
+      border-radius: var(--raio-sm);
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+
+    /* Cada aba individual */
+    .tab-btn {
+      flex: 1;                /* ocupa metade do espaço disponível             */
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--texto-2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;   /* transição suave ao trocar de aba             */
+    }
+
+    /* Aba ativa fica verde */
+    .tab-btn.ativo {
+      background: var(--verde);
+      color: #fff;
+    }
+
+    /* Label dos campos do formulário */
+    .campo-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--texto-2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    /* Wrapper do campo para posicionar ícone */
+    .campo-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    /* Ícone dentro do input (decorativo) */
+    .campo-icone {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;   /* não interfere no clique                       */
+    }
+
+    /* Estilo base dos inputs de texto e senha */
+    .campo-input {
+      width: 100%;
+      padding: 13px 13px 13px 42px; /* espaço à esquerda para o ícone          */
+      background: var(--fundo);
+      border: 1.5px solid var(--borda);
+      border-radius: var(--raio-sm);
+      color: var(--texto);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    /* Destaque verde quando o campo está em foco */
+    .campo-input:focus { border-color: var(--verde); }
+
+    /* Botão principal (entrar, salvar, confirmar) */
+    .btn-primario {
+      width: 100%;
+      padding: 15px;
+      background: var(--verde);
+      color: #fff;
+      border: none;
+      border-radius: var(--raio-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    /* Efeito de pressionar o botão */
+    .btn-primario:active { transform: scale(0.97); }
+    .btn-primario:hover  { background: var(--laranja-esc); }
+
+    /* Botão secundário (cancelar, voltar) */
+    .btn-secundario {
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      color: var(--texto-2);
+      border: 1.5px solid var(--borda);
+      border-radius: var(--raio-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-secundario:hover { border-color: var(--verde); color: var(--verde); }
+
+    /* Mensagem de erro no login */
+    .msg-erro {
+      display: none;          /* oculta até surgir um erro                     */
+      background: rgba(239,68,68,0.15);
+      border: 1px solid var(--vermelho);
+      border-radius: var(--raio-sm);
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: var(--vermelho);
+      margin-bottom: 16px;
+    }
+
+    /* ==========================================================================
+       APP PRINCIPAL (exibido após login)
+       ========================================================================== */
+    #app {
+      display: none;          /* oculta; JS exibe após autenticação            */
+      flex-direction: column;
+      height: 100vh;
+      max-width: 480px;       /* largura máxima: look de app mobile mesmo em desktop */
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ---- BARRA SUPERIOR (header) ---- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      background: var(--superficie);
+      border-bottom: 1px solid var(--borda);
+      position: sticky;       /* fica fixo no topo durante o scroll            */
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--laranja);
+    }
+
+    /* Área central: nome da tela atual */
+    .topbar-titulo {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--texto-2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Badge com perfil do usuário logado */
+    .badge-perfil {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Cor diferente por perfil (RF8, RNF14) */
+    .badge-gerente  { background: rgba(58,125,44,0.15); color: var(--verde); }
+    .badge-atendente { background: rgba(249,115,22,0.15); color: var(--laranja); }
+
+    /* ---- ÁREA DE CONTEÚDO PRINCIPAL ---- */
+    .conteudo {
+      flex: 1;                /* ocupa todo o espaço entre topbar e navbar     */
+      overflow-y: auto;       /* scroll apenas no conteúdo                     */
+      padding: 16px;
+      padding-bottom: 80px;   /* espaço para a barra de navegação inferior     */
+    }
+
+    /* ---- NAVEGAÇÃO INFERIOR (navbar) ---- */
+    .navbar {
+      display: flex;
+      position: fixed;        /* sempre visível na parte inferior da tela      */
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--superficie);
+      border-top: 1px solid var(--borda);
+      z-index: 10;
+    }
+
+    /* Cada item da navbar */
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px 14px;
+      cursor: pointer;
+      gap: 4px;
+      transition: color 0.2s;
+      color: var(--texto-2);
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: none;
+      background: transparent;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Item ativo na navbar fica verde */
+    .nav-item.ativo { color: var(--verde); }
+
+    /* Ícone SVG da navbar */
+    .nav-item svg { width: 22px; height: 22px; }
+
+    /* ==========================================================================
+       TELAS / SEÇÕES
+       Cada "página" do app é uma div; apenas a ativa é exibida (display:block)
+       ========================================================================== */
+    .tela { display: none; }          /* oculta por padrão                     */
+    .tela.ativa { display: block; }   /* JS adiciona classe "ativa"             */
+
+    /* ==========================================================================
+       COMPONENTES REUTILIZÁVEIS
+       ========================================================================== */
+
+    /* ---- CARDS GENÉRICOS ---- */
+    .card {
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio);
+      padding: 16px;
+      margin-bottom: 12px;
+      animation: subir 0.3s ease;     /* entra com animação                    */
+    }
+
+    /* Cabeçalho de seção: título + botão à direita */
+    .secao-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .secao-titulo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--texto);
+    }
+
+    /* Seção com margem pequena */
+    .secao-titulo-sm { margin-bottom: 14px; }
+    .secao-titulo-xs { margin-bottom: 10px; }
+
+    /* Botão pequeno (adicionar, ver mais, etc.) */
+    .btn-sm {
+      padding: 7px 14px;
+      background: var(--verde);
+      color: #fff;
+      border: none;
+      border-radius: var(--raio-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-sm:hover { background: var(--laranja); }
+
+    /* Botão pequeno vermelho para deletar/cancelar */
+    .btn-sm-vermelho {
+      padding: 6px 12px;
+      background: rgba(239,68,68,0.15);
+      color: var(--vermelho);
+      border: 1px solid var(--vermelho);
+      border-radius: var(--raio-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Botão pequeno verde para confirmar/pronto */
+    .btn-sm-verde {
+      padding: 6px 12px;
+      background: rgba(34,197,94,0.15);
+      color: var(--verde);
+      border: 1px solid var(--verde);
+      border-radius: var(--raio-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ---- BADGE DE STATUS DOS PEDIDOS ---- */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Ponto indicador ao lado do status */
+    .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Cores por status (RF6, RF9, RF10) */
+    .status-aguardando { background: rgba(249,115,22,0.15); color: var(--laranja); }
+    .status-preparo    { background: rgba(59,130,246,0.15); color: var(--azul); }
+    .status-pronto     { background: rgba(58,125,44,0.15);  color: var(--verde); }
+    .status-cancelado  { background: rgba(239,68,68,0.15);  color: var(--vermelho); }
+
+    /* ---- LINHA DIVISÓRIA ---- */
+    .divider {
+      height: 1px;
+      background: var(--borda);
+      margin: 12px 0;
+    }
+
+    /* ---- CAMPO DE INPUT GENÉRICO (formulários internos) ---- */
+    .input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--fundo);
+      border: 1.5px solid var(--borda);
+      border-radius: var(--raio-sm);
+      color: var(--texto);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+
+    .input:focus { border-color: var(--verde); }
+
+    /* Select (dropdown) com mesmo estilo dos inputs */
+    select.input { cursor: pointer; }
+
+    /* Textarea com altura ajustável pelo usuário */
+    textarea.input { min-height: 80px; resize: vertical; }
+
+    /* Label para inputs internos */
+    .label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--texto-2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+
+    /* ---- GRADE DE ESTATÍSTICAS (Dashboard do gerente) ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 2 colunas iguais */
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    /* Cartão de stat individual */
+    .stat-card {
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-valor {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--laranja);
+      line-height: 1;
+    }
+
+    /* ---- INFORMAÇÕES (labels e valores) ---- */
+    .info-label {
+      font-size: 0.75rem;
+      color: var(--texto-2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .info-label-lg {
+      font-size: 0.75rem;
+      color: var(--texto-2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .info-value {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .info-subtitle {
+      font-size: 0.8rem;
+      color: var(--texto-2);
+      margin-top: 2px;
+    }
+
+    /* Botão logout em vermelho */
+    .btn-logout { background: var(--vermelho); }
+
+    /* ---- LISTA DE PEDIDOS ---- */
+    .pedido-card {
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio);
+      padding: 14px;
+      margin-bottom: 10px;
+      animation: subir 0.3s ease;
+    }
+
+    .pedido-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .pedido-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--texto);
+    }
+
+    .pedido-hora {
+      font-size: 0.75rem;
+      color: var(--texto-2);
+      margin-top: 2px;
+    }
+
+    /* Lista de itens dentro do pedido */
+    .pedido-itens { margin: 8px 0; }
+
+    .pedido-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--borda);
+    }
+
+    /* Área de observações do pedido (RNF9, RF9) */
+    .pedido-obs {
+      font-size: 0.8rem;
+      color: var(--texto-2);
+      background: var(--fundo);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    /* Ações do pedido (botões de status) */
+    .pedido-acoes {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ---- MENU DE PRODUTOS (RF9, RF10) ---- */
+    .categoria-titulo {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--verde);
+      margin: 16px 0 8px;
+    }
+
+    /* .produto-item definido na seção de estilos visuais abaixo */
+
+    /* Destaque ao selecionar produto */
+    .produto-item:active { border-color: var(--verde); }
+    .produto-item.selecionado { border-color: var(--verde); background: rgba(58,125,44,0.08); }
+
+    .produto-nome { font-weight: 500; font-size: 0.95rem; }
+    .produto-preco { color: var(--laranja); font-weight: 700; font-size: 0.95rem; }
+
+    /* Contador de quantidade do produto no carrinho */
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--borda);
+      background: transparent;
+      color: var(--texto);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .qty-btn:hover { border-color: var(--verde); color: var(--verde); }
+    .qty-num { font-weight: 600; min-width: 20px; text-align: center; }
+
+    /* ---- BARRA FLUTUANTE DO CARRINHO ---- */
+
+    .carrinho-titulo {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .carrinho-bar {
+      display: none;          /* aparece apenas quando há itens no carrinho    */
+      position: fixed;
+      bottom: 70px;           /* acima da navbar                               */
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 448px;
+      background: var(--verde);
+      color: #fff;
+      border-radius: var(--raio);
+      padding: 14px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 9;
+      box-shadow: 0 8px 32px rgba(58,125,44,0.4);
+      animation: subir 0.3s ease;
+    }
+
+    .carrinho-info { font-size: 0.85rem; font-weight: 500; }
+    .carrinho-total { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; }
+
+    /* ---- MODAL (janela flutuante) ---- */
+    .modal-overlay {
+      display: none;          /* oculto por padrão                             */
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);  /* fundo escurecido                      */
+      z-index: 100;
+      align-items: flex-end;         /* modal sobe pela parte inferior (sheet) */
+      justify-content: center;
+    }
+
+    /* Exibir modal quando ativo */
+    .modal-overlay.aberto { display: flex; }
+
+    /* Painel do modal (bottom sheet) */
+    .modal {
+      background: var(--superficie);
+      border-radius: var(--raio) var(--raio) 0 0;
+      padding: 24px 20px 36px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: subir 0.3s ease;
+    }
+
+    .modal-titulo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    /* Row do total no modal */
+    .modal-total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .modal-total-label {
+      font-weight: 600;
+    }
+
+    .modal-total-valor {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      color: var(--laranja);
+    }
+
+    /* Botão com margem no modal */
+    .modal-btn { margin-top: 16px; }
+
+    /* ---- RELATÓRIOS (RNF10, RNF11, RNF12) ---- */
+    .relatorio-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--borda);
+      font-size: 0.9rem;
+    }
+
+    .relatorio-valor {
+      font-weight: 700;
+      color: var(--laranja);
+    }
+
+    /* ---- EMPTY STATE (quando não há dados) ---- */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--texto-2);
+    }
+
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-msg  { font-size: 0.9rem; }
+
+    /* ---- TOAST (notificação rápida) ---- */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px); /* começa fora da tela   */
+      background: var(--verde);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      z-index: 200;
+      transition: transform 0.3s ease;
+      white-space: nowrap;
+    }
+
+    /* Toast visível */
+    .toast.visivel { transform: translateX(-50%) translateY(0); }
+
+    /* ---- FILTROS DE STATUS (na tela de pedidos) ---- */
+    .filtros {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 14px;
+      -ms-overflow-style: none;   /* esconde scrollbar no IE */
+    }
+
+    .filtros::-webkit-scrollbar { display: none; } /* esconde scrollbar no Chrome */
+
+    .filtro-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--borda);
+      background: transparent;
+      color: var(--texto-2);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .filtro-btn.ativo {
+      border-color: var(--verde);
+      color: var(--verde);
+      background: rgba(58,125,44,0.1);
+    }
+
+    /* ---- COMPROVANTE (RNF7) ---- */
+    .comprovante {
+      background: #fff;
+      color: #111;
+      border-radius: var(--raio);
+      padding: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      margin-top: 12px;
+    }
+
+    .comprovante-logo {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .comprovante-linha {
+      border-top: 1px dashed #ccc;
+      margin: 8px 0;
+    }
+
+    /* ---- CADASTRO DE CLIENTES (RNF8) ---- */
+    .cliente-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio-sm);
+      margin-bottom: 8px;
+    }
+
+    .cliente-nome { font-weight: 600; font-size: 0.95rem; }
+    .cliente-tel  { font-size: 0.8rem; color: var(--texto-2); margin-top: 2px; }
+
+    /* ---- TOGGLE (interruptor on/off) ---- */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+    }
+
+    .toggle-label { font-size: 0.9rem; font-weight: 500; }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle input { display: none; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--borda);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--laranja); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* ---- CLASSES UTILITÁRIAS (para remover inline styles) ---- */
+    .hidden { display: none !important; }
+    .full-width { width: 100%; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-12 { margin-bottom: 12px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mt-4 { margin-top: 4px; }
+    .p-12 { padding: 12px; }
+    .pb-12 { padding-bottom: 12px; }
+    .border-bottom { border-bottom: 1px solid var(--borda); }
+    .fw-600 { font-weight: 600; }
+    .fw-700 { font-weight: 700; }
+    .fs-sm { font-size: 0.75rem; }
+    .fs-md { font-size: 0.9rem; }
+    .fs-lg { font-size: 1.1rem; }
+    .c-laranja { color: var(--laranja); }
+    .c-texto-2 { color: var(--texto-2); }
+    .bg-superficie { background: var(--superficie); }
+    .rounded-sm { border-radius: var(--raio-sm); }
+
+    /* ---- RESPONSIVIDADE EXTRA (telas maiores que 480px) ---- */
+    @media (min-width: 481px) {
+      /* No desktop o app fica centrado com borda, simulando um celular */
+      #app {
+        border-left:  1px solid var(--borda);
+        border-right: 1px solid var(--borda);
+      }
+
+      .navbar { border-radius: 0 0 var(--raio) var(--raio); }
+    }
+
+    /* ---- PRODUTO COM IMAGEM ---- */
+    .produto-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--superficie);
+      border: 1px solid var(--borda);
+      border-radius: var(--raio-sm);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      gap: 10px;
+    }
+
+    .produto-img-wrap {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--verde-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+
+    .produto-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .produto-info-col {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .produto-direita {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Estilo da tela de login – fundo com ondas verdes */
+    .tela-login-container {
+      background: var(--fundo) !important;
+    }
+
+    .card-login {
+      background: #fff;
+      border: 1.5px solid var(--borda);
+      box-shadow: 0 8px 40px rgba(58,125,44,0.13);
+    }
+
+    /* Categoria com ícone colorido */
+    .categoria-titulo {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--verde);
+      margin: 18px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--verde-bg);
+      border-radius: var(--raio-sm);
+      border-left: 3px solid var(--verde);
+    }
+
+    /* Logo da topbar com estilo Casa de Sucos */
+    .topbar-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--verde) 40%, var(--laranja) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Login logo com gradiente */
+    .login-logo {
+      background: linear-gradient(135deg, var(--verde) 30%, var(--laranja) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
