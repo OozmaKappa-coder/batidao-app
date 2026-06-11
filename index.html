@@ -302,7 +302,10 @@
           <button class="btn-sm" onclick="popularProdutosComDados()" style="width: 100%; margin-bottom: 12px;">
             📥 Popular 40+ Produtos
           </button>
-          <div style="font-size: 0.75rem; color: var(--texto-2);">Adiciona todos os produtos do cardápio ao sistema.</div>
+          <button class="btn-sm" onclick="definirDestaquesPadrao()" style="width: 100%; margin-bottom: 12px; background: var(--laranja); color: #fff;">
+            ⭐ Definir Mais Pedidos e Promoções Padrão
+          </button>
+          <div style="font-size: 0.75rem; color: var(--texto-2);">Marca automaticamente os produtos mais vendidos e ativa as seções de destaque no cardápio.</div>
         </div>
 
         <!-- Botão de logout -->
@@ -457,6 +460,61 @@
       <label class="label">Descrição (opcional)</label>
       <input class="input" type="text" id="prod-desc"
              placeholder="Ex: 500ml, natural, sem conservantes" />
+
+      <label class="label">📸 Foto do Produto</label>
+
+      <!-- Preview da imagem + botão de upload -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div id="prod-img-preview" style="
+          width:72px;height:72px;border-radius:10px;
+          background:var(--verde-bg);border:2px dashed var(--borda);
+          display:flex;align-items:center;justify-content:center;
+          font-size:2rem;overflow:hidden;flex-shrink:0">
+          🖼️
+        </div>
+        <div style="flex:1">
+          <label style="
+            display:block;width:100%;padding:10px;
+            background:var(--laranja);color:#fff;
+            border-radius:var(--raio-sm);text-align:center;
+            font-weight:600;font-size:0.9rem;cursor:pointer">
+            📂 Escolher Foto
+            <input type="file" id="prod-imagem-file" accept="image/*"
+                   style="display:none" onchange="previewImagemProduto(this)">
+          </label>
+          <div style="font-size:0.7rem;color:var(--texto-2);margin-top:4px;text-align:center">
+            JPG, PNG ou WEBP
+          </div>
+        </div>
+      </div>
+
+      <!-- Campo oculto que guarda o nome do arquivo -->
+      <input type="hidden" id="prod-imagem" />
+
+      <!-- Instrução alternativa para quem já tem pasta img/ -->
+      <details style="margin-bottom:12px">
+        <summary style="font-size:0.75rem;color:var(--texto-2);cursor:pointer;user-select:none">
+          Ou digitar nome do arquivo manualmente (pasta img/)
+        </summary>
+        <input class="input" type="text" id="prod-imagem-manual"
+               placeholder="Ex: linguica.jpg"
+               oninput="previewImagemManual(this.value)"
+               style="margin-top:6px" />
+        <div style="font-size:0.7rem;color:var(--texto-2);margin-top:4px">
+          Coloque o arquivo dentro da pasta <strong>img/</strong> ao lado do index.html
+        </div>
+      </details>
+
+      <div style="display:flex;gap:16px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;font-weight:500">
+          <input type="checkbox" id="prod-mais-vendido" style="width:18px;height:18px;accent-color:var(--laranja)">
+          ⭐ Mais Pedido
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem;font-weight:500">
+          <input type="checkbox" id="prod-promocao" style="width:18px;height:18px;accent-color:var(--vermelho)">
+          🔥 Promoção
+        </label>
+      </div>
 
       <button class="btn-primario" onclick="salvarProduto()">💾 Salvar Produto</button>
       <br><br>
