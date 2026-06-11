@@ -1080,3 +1080,90 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
+    /* ---- SEÇÕES DE DESTAQUE: MAIS PEDIDOS E PROMOÇÕES ---- */
+    .secao-destaque-titulo {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--verde);
+      margin: 16px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Scroll horizontal para os cards de mais pedidos */
+    .scroll-horizontal {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .scroll-horizontal::-webkit-scrollbar { display: none; }
+
+    /* Card individual de produto destaque (mais pedidos) */
+    .card-destaque {
+      flex-shrink: 0;
+      width: 110px;
+      background: var(--superficie);
+      border: 1.5px solid var(--borda);
+      border-radius: var(--raio);
+      padding: 10px 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card-destaque:active { border-color: var(--verde); }
+    .card-destaque.selecionado { border-color: var(--verde); background: rgba(58,125,44,0.08); }
+
+    .card-destaque-img {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--verde-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 6px;
+    }
+    .card-destaque-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .card-destaque-nome {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--texto);
+      line-height: 1.3;
+      margin-bottom: 4px;
+      /* Trunca nomes longos em 2 linhas */
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-destaque-preco {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--laranja);
+    }
+
+    /* Badge "PROMO" vermelho nos cards de produto */
+    .badge-promo {
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #fff;
+      background: var(--vermelho);
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0.5px;
+    }
