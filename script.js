@@ -285,10 +285,32 @@ const firebaseConfig = {
   }
 
   /**
-   * getImagemProduto(nome, categoria)
-   * Retorna emoji/imagem representativa baseada no nome ou categoria do produto
+   * getImagemProduto(nome, categoria, imagemCampo)
+   * Retorna HTML da imagem do produto.
+   * Se o produto tiver campo 'imagem' (nome do arquivo em img/), usa a foto real.
+   * Caso contrário, usa emoji como fallback.
+   * 
+   * COMO TROCAR A IMAGEM:
+   * 1. Coloque o arquivo de foto dentro da pasta img/ (ex: img/linguica.jpg)
+   * 2. No app, vá em Cardápio → edite o produto
+   * 3. No campo "Imagem (nome do arquivo)", digite: linguica.jpg
+   * 4. Salve — a foto aparecerá automaticamente!
    */
-  function getImagemProduto(nome, categoria) {
+  function getImagemProduto(nome, categoria, imagemCampo) {
+    if (imagemCampo) {
+      // base64 (upload direto pelo botão) ou arquivo na pasta img/
+      const src = imagemCampo.startsWith('data:') ? imagemCampo : 'img/' + imagemCampo;
+      const nomeEsc = (nome || '').replace(/"/g, '&quot;');
+      return `<img src="${src}" alt="${nomeEsc}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display='none'">`;
+    }
+    return getEmojiProduto(nome, categoria);
+  }
+
+  /**
+   * getEmojiProduto(nome, categoria)
+   * Retorna emoji representativo baseado no nome ou categoria do produto (fallback)
+   */
+  function getEmojiProduto(nome, categoria) {
     const n = (nome || '').toLowerCase();
     const c = (categoria || '').toLowerCase();
 
@@ -360,32 +382,77 @@ const firebaseConfig = {
   }
 
   /**
+   * renderCardProduto(p)
+   * Gera o HTML de um card de produto (reutilizado em várias seções)
+   */
+  function renderCardProduto(p) {
+    const qtd = carrinho[p.id]?.qtd || 0;
+    const imgConteudo = getImagemProduto(p.nome, p.categoria, p.imagem || '');
+    return `
+      <div class="produto-item ${qtd > 0 ? 'selecionado' : ''}" id="prod-${p.id}" onclick="abrirModalAdicionais('${p.id}')">
+        <div class="produto-img-wrap">${imgConteudo}</div>
+        <div class="produto-info-col">
+          <div class="produto-nome">${p.nome}</div>
+          ${p.descricao ? '<div style="font-size:0.75rem;color:var(--texto-2);margin-top:2px;line-height:1.3">' + p.descricao + '</div>' : ''}
+        </div>
+        <div class="produto-direita">
+          ${p.promocao ? '<span class="badge-promo">PROMO</span>' : ''}
+          <span class="produto-preco">R$ ${Number(p.preco).toFixed(2)}</span>
+          ${qtd > 0 ? '<span style="font-size:0.75rem;color:var(--verde);font-weight:700;background:var(--verde-bg);padding:2px 7px;border-radius:20px">' + qtd + 'x</span>' : ''}
+        </div>
+      </div>`;
+  }
+
+  /**
    * renderizarMenuPedido()
-   * Renderiza o cardápio na tela de "Novo Pedido" agrupado por categoria
+   * Renderiza o cardápio na tela de "Novo Pedido":
+   * 1. Seção "Os Mais Pedidos" (produtos marcados como maisVendido)
+   * 2. Seção "Promoções" (produtos marcados como promocao)
+   * 3. Cardápio completo agrupado por categoria
    */
   function renderizarMenuPedido() {
     const container = document.getElementById('menu-container');
 
-    // Se não há produtos cadastrados ainda
     if (todosProdutos.length === 0) {
-      container.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🍹</div>
-          <div class="empty-msg">Nenhum produto no cardápio.<br>
-          ${perfilAtual === 'gerente' ? 'Vá em Cardápio para adicionar.' : 'Aguarde o gerente adicionar produtos.'}</div>
-        </div>`;
+      container.innerHTML = '<div class="empty"><div class="empty-icon">🍹</div><div class="empty-msg">Nenhum produto no cardápio.<br>' +
+        (perfilAtual === 'gerente' ? 'Vá em Cardápio para adicionar.' : 'Aguarde o gerente adicionar produtos.') + '</div></div>';
       return;
     }
 
-    // Agrupa produtos por categoria usando reduce()
-    const grupos = todosProdutos.reduce((acc, p) => {
+    let html = '';
+
+    // ── SEÇÃO: OS MAIS PEDIDOS ──────────────────────────────────────────────
+    const maisPedidos = todosProdutos.filter(function(p) { return p.maisVendido; });
+    if (maisPedidos.length > 0) {
+      html += '<div class="secao-destaque-titulo">⭐ Os Mais Pedidos</div><div class="scroll-horizontal">';
+      maisPedidos.forEach(function(p) {
+        const imgConteudo = getImagemProduto(p.nome, p.categoria, p.imagem || '');
+        const qtd = carrinho[p.id] ? carrinho[p.id].qtd : 0;
+        html += '<div class="card-destaque ' + (qtd > 0 ? 'selecionado' : '') + '" onclick="abrirModalAdicionais(\'' + p.id + '\')">' +
+          '<div class="card-destaque-img">' + imgConteudo + '</div>' +
+          '<div class="card-destaque-nome">' + p.nome + '</div>' +
+          '<div class="card-destaque-preco">R$ ' + Number(p.preco).toFixed(2) + '</div>' +
+          (qtd > 0 ? '<div style="font-size:0.7rem;color:var(--verde);font-weight:700">' + qtd + 'x no carrinho</div>' : '') +
+          '</div>';
+      });
+      html += '</div>';
+    }
+
+    // ── SEÇÃO: PROMOÇÕES ────────────────────────────────────────────────────
+    const emPromocao = todosProdutos.filter(function(p) { return p.promocao; });
+    if (emPromocao.length > 0) {
+      html += '<div class="secao-destaque-titulo" style="color:var(--vermelho)">🔥 Promoções</div>';
+      emPromocao.forEach(function(p) { html += renderCardProduto(p); });
+    }
+
+    // ── CARDÁPIO COMPLETO POR CATEGORIA ─────────────────────────────────────
+    const grupos = todosProdutos.reduce(function(acc, p) {
       const cat = p.categoria || 'Outros';
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(p);
       return acc;
     }, {});
 
-    // Ícone de categoria
     function iconCategoria(cat) {
       const c = cat.toLowerCase();
       if (c.includes('suco')) return '🥤';
@@ -397,28 +464,9 @@ const firebaseConfig = {
       return '🍽️';
     }
 
-    // Constrói o HTML para cada grupo de categoria
-    let html = '';
     for (const [cat, produtos] of Object.entries(grupos)) {
-      html += `<div class="categoria-titulo">${iconCategoria(cat)} ${cat}</div>`;
-
-      produtos.forEach(p => {
-        const qtd = carrinho[p.id]?.qtd || 0;
-        const imgEmoji = getImagemProduto(p.nome, p.categoria);
-
-        html += `
-          <div class="produto-item ${qtd > 0 ? 'selecionado' : ''}" id="prod-${p.id}" onclick="abrirModalAdicionais('${p.id}')">
-            <div class="produto-img-wrap">${imgEmoji}</div>
-            <div class="produto-info-col">
-              <div class="produto-nome">${p.nome}</div>
-              ${p.descricao ? `<div style="font-size:0.75rem;color:var(--texto-2);margin-top:2px;line-height:1.3">${p.descricao}</div>` : ''}
-            </div>
-            <div class="produto-direita">
-              <span class="produto-preco">R$ ${Number(p.preco).toFixed(2)}</span>
-              ${qtd > 0 ? `<span style="font-size:0.75rem;color:var(--verde);font-weight:700;background:var(--verde-bg);padding:2px 7px;border-radius:20px">${qtd}x</span>` : ''}
-            </div>
-          </div>`;
-      });
+      html += '<div class="categoria-titulo">' + iconCategoria(cat) + ' ' + cat + '</div>';
+      produtos.forEach(function(p) { html += renderCardProduto(p); });
     }
 
     container.innerHTML = html;
@@ -445,20 +493,38 @@ const firebaseConfig = {
       return;
     }
 
-    container.innerHTML = todosProdutos.map(p => `
+    container.innerHTML = todosProdutos.map(p => {
+      const dadosBtn = JSON.stringify({
+        id: p.id,
+        nome: p.nome,
+        categoria: p.categoria,
+        preco: p.preco,
+        descricao: p.descricao || '',
+        imagem: p.imagem || '',
+        maisVendido: p.maisVendido || false,
+        promocao: p.promocao || false
+      });
+      return `
       <div class="produto-item">
-        <div>
-          <div class="produto-nome">${p.nome}</div>
-          <div style="font-size:0.75rem;color:var(--texto-2)">${p.categoria} · R$ ${Number(p.preco).toFixed(2)}</div>
-          ${p.descricao ? `<div style="font-size:0.75rem;color:var(--texto-2);margin-top:2px">${p.descricao}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div class="produto-img-wrap" style="width:44px;height:44px;font-size:1.3rem;flex-shrink:0">
+            ${getImagemProduto(p.nome, p.categoria, p.imagem || '')}
+          </div>
+          <div style="min-width:0">
+            <div class="produto-nome">${p.nome}</div>
+            <div style="font-size:0.75rem;color:var(--texto-2)">${p.categoria} · R$ ${Number(p.preco).toFixed(2)}</div>
+            <div style="display:flex;gap:6px;margin-top:3px">
+              ${p.maisVendido ? '<span style="font-size:0.65rem;background:var(--laranja);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700">⭐ TOP</span>' : ''}
+              ${p.promocao    ? '<span style="font-size:0.65rem;background:var(--vermelho);color:#fff;padding:1px 5px;border-radius:4px;font-weight:700">🔥 PROMO</span>' : ''}
+            </div>
+          </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <!-- Botão editar: abre o modal com os dados do produto -->
-          <button class="btn-sm" onclick='editarProduto(${JSON.stringify({id:p.id,nome:p.nome,categoria:p.categoria,preco:p.preco,descricao:p.descricao||""})})'>✏️</button>
-          <!-- Botão excluir: remove o produto do Firestore -->
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-sm" onclick='editarProduto(${dadosBtn})'>✏️</button>
           <button class="btn-sm-vermelho" onclick="excluirProduto('${p.id}','${escapeJS(p.nome)}')">🗑️</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   /**
@@ -467,11 +533,19 @@ const firebaseConfig = {
    */
   function abrirModalProduto() {
     document.getElementById('modal-produto-titulo').textContent = '+ Novo Produto';
-    document.getElementById('prod-id').value        = '';     // sem ID = novo produto
+    document.getElementById('prod-id').value        = '';
     document.getElementById('prod-nome').value      = '';
     document.getElementById('prod-categoria').value = '';
     document.getElementById('prod-preco').value     = '';
     document.getElementById('prod-desc').value      = '';
+    document.getElementById('prod-imagem').value    = '';
+    document.getElementById('prod-mais-vendido').checked = false;
+    document.getElementById('prod-promocao').checked     = false;
+    // Limpa preview
+    document.getElementById('prod-img-preview').innerHTML = '🖼️';
+    document.getElementById('prod-img-preview').style.backgroundImage = '';
+    const manualEl = document.getElementById('prod-imagem-manual');
+    if (manualEl) manualEl.value = '';
     document.getElementById('modal-produto').classList.add('aberto');
   }
 
@@ -486,10 +560,68 @@ const firebaseConfig = {
     document.getElementById('prod-categoria').value = p.categoria;
     document.getElementById('prod-preco').value     = p.preco;
     document.getElementById('prod-desc').value      = p.descricao;
+    document.getElementById('prod-imagem').value    = p.imagem || '';
+    document.getElementById('prod-mais-vendido').checked = p.maisVendido || false;
+    document.getElementById('prod-promocao').checked     = p.promocao || false;
+
+    // Mostra preview da imagem atual
+    const preview = document.getElementById('prod-img-preview');
+    const manualEl = document.getElementById('prod-imagem-manual');
+    if (manualEl) manualEl.value = p.imagem || '';
+    if (p.imagem) {
+      // Tenta carregar como base64 (upload direto) ou como arquivo em img/
+      const src = p.imagem.startsWith('data:') ? p.imagem : 'img/' + p.imagem;
+      preview.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:8px"
+        onerror="this.parentElement.innerHTML='❌';this.parentElement.title='Arquivo não encontrado em img/${p.imagem}'">`;
+    } else {
+      preview.innerHTML = '🖼️';
+    }
+
+    // Mostra o botão de gerenciar adicionais apenas ao editar
+    document.getElementById('btn-gerenciar-adicionais').style.display = 'block';
     document.getElementById('modal-produto').classList.add('aberto');
 
     // Mostra o botão de gerenciar adicionais apenas ao editar
     document.getElementById('btn-gerenciar-adicionais').style.display = 'block';
+  }
+
+  /**
+   * previewImagemProduto(input)
+   * Chamada quando o usuário escolhe um arquivo de foto pelo botão "Escolher Foto".
+   * Converte a imagem para base64 e salva no campo oculto prod-imagem,
+   * exibindo o preview imediatamente — sem precisar de pasta img/.
+   */
+  function previewImagemProduto(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      // Salva base64 no campo oculto (será guardado no Firestore)
+      document.getElementById('prod-imagem').value = base64;
+      // Mostra preview
+      const preview = document.getElementById('prod-img-preview');
+      preview.innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /**
+   * previewImagemManual(valor)
+   * Chamada quando o usuário digita o nome do arquivo manualmente (pasta img/).
+   * Atualiza o campo oculto e tenta mostrar preview.
+   */
+  function previewImagemManual(valor) {
+    const nome = valor.trim();
+    document.getElementById('prod-imagem').value = nome;
+    const preview = document.getElementById('prod-img-preview');
+    if (nome) {
+      preview.innerHTML = `<img src="img/${nome}" style="width:100%;height:100%;object-fit:cover;border-radius:8px"
+        onerror="this.parentElement.innerHTML='❌';this.parentElement.title='Não encontrado: img/${nome}'">`;
+    } else {
+      preview.innerHTML = '🖼️';
+    }
   }
 
   /**
@@ -498,11 +630,14 @@ const firebaseConfig = {
    * Se prod-id está preenchido = edição; senão = criação
    */
   async function salvarProduto() {
-    const id        = document.getElementById('prod-id').value;
-    const nome      = document.getElementById('prod-nome').value.trim();
-    const categoria = document.getElementById('prod-categoria').value.trim();
-    const preco     = parseFloat(document.getElementById('prod-preco').value);
-    const descricao = document.getElementById('prod-desc').value.trim();
+    const id          = document.getElementById('prod-id').value;
+    const nome        = document.getElementById('prod-nome').value.trim();
+    const categoria   = document.getElementById('prod-categoria').value.trim();
+    const preco       = parseFloat(document.getElementById('prod-preco').value);
+    const descricao   = document.getElementById('prod-desc').value.trim();
+    const imagem      = document.getElementById('prod-imagem').value.trim();
+    const maisVendido = document.getElementById('prod-mais-vendido').checked;
+    const promocao    = document.getElementById('prod-promocao').checked;
 
     // Validação
     if (!nome || !categoria || isNaN(preco)) {
@@ -511,7 +646,7 @@ const firebaseConfig = {
     }
 
     // Objeto com os dados do produto
-    const dados = { nome, categoria, preco, descricao,
+    const dados = { nome, categoria, preco, descricao, imagem, maisVendido, promocao,
                     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp() };
 
     if (id) {
@@ -1517,6 +1652,63 @@ const firebaseConfig = {
 
     // Fecha o modal
     fecharModal('modal-adicionais');
+  }
+
+  /* =========================================================================
+     BLOCO 17.5 – DEFINIR DESTAQUES PADRÃO
+     Marca os produtos mais vendidos e promoções automaticamente
+     ========================================================================= */
+
+  /**
+   * definirDestaquesPadrao()
+   * Percorre os produtos cadastrados e marca como "maisVendido" os 6 mais pedidos
+   * da foto (Linguiça Trad., Linguiça Completão, Laranja c/ Morango, Frango,
+   * Misto Quente, Maracujá 500ml) e marca os combos como promoção.
+   * Execute uma vez pelo gerente em Config → Funções Admin.
+   */
+  async function definirDestaquesPadrao() {
+    if (!usuarioAtual || perfilAtual !== 'gerente') {
+      alert('❌ Apenas gerentes podem fazer isso.');
+      return;
+    }
+    if (!confirm('Isso vai marcar automaticamente os "Mais Pedidos" e "Promoções" no cardápio. Continuar?')) return;
+
+    // Nomes parciais dos produtos que viram "Mais Pedidos" (⭐)
+    const maisVendidosChaves = [
+      'linguiça (tradicional)', 'linguica (tradicional)',
+      'linguiça completao', 'linguica completao',
+      'laranja c/ morango',
+      'frango',
+      'misto quente',
+      'maracujá 500ml', 'maracuja 500ml'
+    ];
+
+    // Categorias que viram "Promoção" (🔥) — combos são sempre promoção
+    const categoriasPromo = ['combos'];
+
+    let atualizados = 0;
+    const batch = db.batch();
+
+    todosProdutos.forEach(p => {
+      const n = (p.nome || '').toLowerCase();
+      const c = (p.categoria || '').toLowerCase();
+
+      const ehMaisVendido = maisVendidosChaves.some(chave => n.includes(chave));
+      const ehPromocao    = categoriasPromo.some(cat => c.includes(cat));
+
+      if (ehMaisVendido || ehPromocao) {
+        const ref = db.collection('produtos').doc(p.id);
+        batch.update(ref, {
+          maisVendido: ehMaisVendido,
+          promocao: ehPromocao
+        });
+        atualizados++;
+      }
+    });
+
+    await batch.commit();
+    mostrarToast('✅ ' + atualizados + ' produtos marcados! As seções já aparecem no cardápio.', 'sucesso');
+    carregarProdutos();
   }
 
   /* =========================================================================
