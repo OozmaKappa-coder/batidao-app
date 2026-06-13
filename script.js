@@ -80,20 +80,12 @@ const firebaseConfig = {
   /**
    * selecionarPerfil(perfil)
    * Ao clicar nas abas GERENTE / ATENDENTE, atualiza a aparência das abas
-   * e pré-preenche o e-mail com o e-mail demo do perfil escolhido
    */
   function selecionarPerfil(perfil) {
-    perfilSelecionado = perfil; // salva qual perfil foi selecionado
-
-    // Remove a classe 'ativo' de todas as abas e adiciona na aba clicada
+    perfilSelecionado = perfil;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ativo'));
     document.getElementById('tab-' + perfil).classList.add('ativo');
-
-    // Pré-preenche o campo de e-mail com o demo do perfil
-    document.getElementById('input-email').value =
-      perfil === 'gerente' ? 'gerente@batidao.com' : 'atendente@batidao.com';
-
-    // Limpa o campo de senha para que o usuário preencha
+    document.getElementById('input-email').value = '';
     document.getElementById('input-senha').value = '';
   }
 
@@ -297,11 +289,11 @@ const firebaseConfig = {
    * 4. Salve — a foto aparecerá automaticamente!
    */
   function getImagemProduto(nome, categoria, imagemCampo) {
-    // Se o produto tem uma imagem cadastrada, usa ela
     if (imagemCampo) {
-      return `<img src="img/${imagemCampo}" alt="${nome}" onerror="this.style.display='none';this.parentElement.innerHTML=getEmojiProduto('${(nome||'').replace(/'/g,"\\'")}','${(categoria||'').replace(/'/g,"\\'")}')">`;
+      const src = imagemCampo.startsWith('data:') ? imagemCampo : 'img/' + imagemCampo;
+      const nomeEsc = (nome || '').replace(/"/g, '&quot;');
+      return `<img src="${src}" alt="${nomeEsc}" style="width:100%;height:100%;object-fit:cover;border-radius:10px" onerror="this.style.display='none'">`;
     }
-    // Sem imagem cadastrada: usa emoji
     return getEmojiProduto(nome, categoria);
   }
 
@@ -540,6 +532,15 @@ const firebaseConfig = {
     document.getElementById('prod-imagem').value    = '';
     document.getElementById('prod-mais-vendido').checked = false;
     document.getElementById('prod-promocao').checked     = false;
+    // Limpa preview e campo manual
+    const preview = document.getElementById('prod-img-preview');
+    if (preview) preview.innerHTML = '🖼️';
+    const manualEl = document.getElementById('prod-imagem-manual');
+    if (manualEl) manualEl.value = '';
+    const fileEl = document.getElementById('prod-imagem-file');
+    if (fileEl) fileEl.value = '';
+    // Esconde botão adicionais (só aparece ao editar)
+    document.getElementById('btn-gerenciar-adicionais').style.display = 'none';
     document.getElementById('modal-produto').classList.add('aberto');
   }
 
@@ -558,7 +559,7 @@ const firebaseConfig = {
     document.getElementById('prod-mais-vendido').checked = p.maisVendido || false;
     document.getElementById('prod-promocao').checked     = p.promocao || false;
 
-    // Atualiza o preview da imagem
+    // Preview da imagem atual do produto
     const preview = document.getElementById('prod-img-preview');
     const manualEl = document.getElementById('prod-imagem-manual');
     if (manualEl) manualEl.value = (p.imagem && !p.imagem.startsWith('data:')) ? p.imagem : '';
@@ -575,11 +576,6 @@ const firebaseConfig = {
     document.getElementById('modal-produto').classList.add('aberto');
   }
 
-  /**
-   * previewImagemProduto(input)
-   * Chamada quando o usuário escolhe um arquivo pelo botão "Escolher Foto".
-   * Converte para base64 e salva no campo oculto prod-imagem.
-   */
   function previewImagemProduto(input) {
     const file = input.files[0];
     if (!file) return;
@@ -593,10 +589,6 @@ const firebaseConfig = {
     reader.readAsDataURL(file);
   }
 
-  /**
-   * previewImagemManual(valor)
-   * Chamada quando o usuário digita o nome do arquivo manualmente (pasta img/).
-   */
   function previewImagemManual(valor) {
     const nome = (valor || '').trim();
     document.getElementById('prod-imagem').value = nome;
