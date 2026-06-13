@@ -101,20 +101,6 @@
       background-size: 28px 28px;
     }
 
-    /* Box de demonstração de login */
-    .login-demo-box {
-      margin-top: 20px;
-      padding: 12px;
-      background: var(--fundo);
-      border-radius: var(--raio-sm);
-      font-size: 0.78rem;
-      color: var(--texto-2);
-    }
-
-    .login-demo-title {
-      color: var(--texto);
-    }
-
     /* Container principal da app */
     .app-container {
       display: none;          /* oculta; JS exibe após autenticação */
